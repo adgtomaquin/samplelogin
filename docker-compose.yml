@@ -1,0 +1,38 @@
+services:
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: authdb
+    environment:
+      POSTGRES_DB:       authdb
+      POSTGRES_USER:     authuser
+      POSTGRES_PASSWORD: authpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U authuser -d authdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: sampleapi
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST:    postgres
+      DB_PORT:    5432
+      DB_NAME:    authdb
+      DB_USER:    authuser
+      DB_PASS:    authpass
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
